@@ -60,7 +60,6 @@ diamonds_subset <- fastDummies::dummy_cols(.data = diamonds_subset,
                                             remove_first_dummy = F)
 
 
-
 # 2nd modalization ----
 
 # creating a lm with new features
@@ -126,7 +125,7 @@ diamonds_subset %>%
 # There is only a 0.06% of the data that are outliers. So we decide to take 
 # them out.
 diamonds_subset %<>% 
-  filter(carat >= 2.15)
+  filter(carat <= 2.15)
 
 
 # last modalization ----
@@ -138,12 +137,28 @@ training_id <- createDataPartition(y = diamonds_subset$price,
 training <- diamonds_subset[training_id,]
 testing <- diamonds_subset[-training_id,]
 
+# defining the variables we want to use
+relevant_var <- c("cut_Very Good","cut_Premium","cut_Ideal","cut_Good",
+                  "cut_Fair","color_J","color_I","color_F","color_G","color_H",      
+                  "color_E","color_D","clarity_SI2","clarity_VS2","clarity_VS1",
+                  "clarity_VVS1","clarity_IF","clarity_SI1","clarity_VVS2",
+                  "clarity_I1","log_price","log_carat" )
+
+# creating the cross validation 
+ctrl <- trainControl(method = "repeatedcv", 
+                     repeats = 3,
+                     number = 5)
+
 # using the function lm to create de model
-final.mod <- lm(log_price ~ log_price + color + clarity, 
-                data = training)
+mod_final <- train(log_price ~., 
+                   data = training[relevant_var], 
+                   method = "lm", 
+                   trControl = ctrl)
 
 # checking the results against the testing 
-postResample(pred = predict(final.mod, testing),
+postResample(pred = predict(mod_final, testing),
              obs = testing$log_price)
 
+# saving the model 
+save(mod_final, file = "scripts/model.rds")
 
