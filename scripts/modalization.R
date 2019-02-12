@@ -8,7 +8,7 @@ library(modelr)
 library(magrittr)
 library(caret)
 
-
+set.seed(123)
 # 1st exploration ----
 
 # subseting the data
