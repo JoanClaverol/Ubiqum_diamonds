@@ -1,6 +1,5 @@
 ### EXPLORING THE DIAMONDS DATASET ###
 
-
 # libraries ----
 
 library(tidyverse)
@@ -101,16 +100,21 @@ plot(mod_transformed)
 par(mfrow = c(1,1))
 
 # transform predictions in log to real and error plot
+carat_treshold <- 1.90
+
 diamonds_subset %>% 
   add_predictions(model = mod_transformed, var = "log_pred") %>% 
   mutate(pred = exp(log_pred), errors = price - pred) %>% 
   ggplot(aes(x = carat)) + 
     geom_hex(aes(y = price)) +
     geom_smooth(aes(y = pred), color = "goldenrod1", se = F) +
-    geom_vline(xintercept=2.75, linetype="dashed", color = "red", size = 1.5, 
-               show.legend = T) +
-    labs(title = "Outliers detection")
-# With that graph we realize that the errors are being affected for outiers, 
+    geom_vline(xintercept=1.90, linetype="dashed", color = "red", size = 1.5) +
+    labs(title = "Outliers detection") +
+    geom_text(aes(x = carat_treshold, label = "  1.90 carat", y = 25000), 
+              colour = "red", text = element_text(size = 20), hjust = 0) +
+    geom_text(aes(x = 3.1, label = " model\npredictions", y = 20000),
+              colour = "goldenrod1", hjust = 0)
+ # With that graph we realize that the errors are being affected for outiers, 
 # and it seems that it represents all the values that are bigger than 2.75.
 
 
@@ -119,14 +123,24 @@ diamonds_subset %>%
 # Finding the % of outliers inside the data and taking them out
 
 diamonds_subset %>% 
-  filter(carat >= 2.75) %>% 
+  filter(carat >= carat_treshold) %>% 
   summarise(OutliersPerc = paste0(round(n()/
                                    nrow(diamonds_subset),4)*100,"%"))
 # There is only a 0.06% of the data that are outliers. So we decide to take 
 # them out.
 diamonds_subset %<>% 
-  filter(carat <= 2.15)
+  filter(carat <= carat_treshold)
 
+# 4th modalization ----
+
+# modalization after outliers extraction and normalization
+mod_normANDout <- lm(log_price ~ scale_carat + color + clarity + cut, 
+                     data = diamonds_subset)
+
+# plotting the errors 
+par(mfrow = c(2,2))
+plot(mod_normANDout)
+par(mfrow = c(1,1))
 
 # last modalization ----
 
